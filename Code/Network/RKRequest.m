@@ -429,6 +429,12 @@
 	}
 }
 
+- (void)updateInternalCacheDate {
+    NSDate* date = [NSDate date];
+    RKLogInfo(@"Updating cache date for request %@ to %@", self, date);
+    [self.cache setCacheDate:date forRequest:self];
+}
+
 - (void)didFinishLoad:(RKResponse*)response {
   	_isLoading = NO;
   	_isLoaded = YES;
@@ -440,6 +446,7 @@
 
 	if ((_cachePolicy & RKRequestCachePolicyEtag) && [response isNotModified]) {
 		finalResponse = [self loadResponseFromCache];
+        [self updateInternalCacheDate];
 	}
 
 	if (![response wasLoadedFromCache] && [response isSuccessful] && (_cachePolicy != RKRequestCachePolicyNone)) {
@@ -526,7 +533,8 @@
     if (_method == RKRequestMethodDELETE) {
         return nil;
     }
-    NSString* compositCacheKey = [NSString stringWithFormat:@"%@-%d-%@", self.URL, _method, [_URLRequest HTTPBody]];
+    // Use [_params HTTPBody] because the URLRequest body may not have been set up yet.
+    NSString* compositCacheKey = [NSString stringWithFormat:@"%@-%d-%@", self.URL, _method, [_params HTTPBody]];
     return [compositCacheKey MD5];
 }
 
